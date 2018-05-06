@@ -1,5 +1,8 @@
 # ComputerSystem
 learning cs from the code view
+关于清华大学操作系统的学习笔记，实验指导书以及源代码地址：https://objectkuan.gitbooks.io/ucore-docs/content/
+#Lab0
+掌握最基本的工具和操作系统中常用的数据结构，比较简单，用到了gcc等编译工具，需要一些C语言基础。具体代码参考Lab0.c
 #Lab1
 实验目的：
 Lab 1主要是关于操作系统如何启动，以及如何去和中断函数调用栈相关的一些知识
@@ -26,10 +29,14 @@ Lab1-EX1实验的两个目的：
 1、用make V=命令会将make指令中的每一步操作逐步显示出来，大概会先调用GCC，生成.o文件，然后生成.out执行文件，后续还会创建一个虚拟硬盘，将ucore.img文件（即操作系统的内核）创建在这里。
 2、这个规范使用sign.c文件中的代码进行规范，具体研读代码。
 
-Lab2-EX2实验的目的：
+Lab1-EX2实验的目的：
 熟悉使用qemu和gdb进行的调试工作，具体的步骤包括：
 从CPU加电后执行的第一条指令开始，单步跟踪BIOS的执行。
 在初始化位置0x7c00设置实地址断点,测试断点正常。
 从0x7c00开始跟踪代码运行,将单步跟踪反汇编得到的代码与bootasm.S和 bootblock.asm进行比较。
 自己找一个bootloader或内核中的代码位置，设置断点并进行测试。
-实际练习中，实验楼启动QEMU后会非常慢，使用make lab1-mon就可以对这部分源代码进行执行，这段代码初始化QEMU的一些初始设置，并将PC跳转到0X7C00，此时加载了BOOTLOADER，然后就可以在QUEMU中进行GDB调试了。
+实际练习中，实验楼启动QEMU后会非常慢，使用make lab1-mon就可以对这部分源代码进行执行，这段代码初始化QEMU的一些初始设置，并将PC跳转到0X7C00，此时加载了BOOTLOADER，然后就可以在QUEMU中进行GDB调试了。其中bootloader部分的源码为bootasm.S以及bootmain.c
+
+Lab1-EX3实验目的：
+BIOS将通过读取硬盘主引导扇区到内存，并转跳到对应内存中的位置执行bootloader。请分析bootloader是如何完成从实模式进入保护模式的。
+需要阅读小节“保护模式和分段机制”和lab1/boot/bootasm.S源码，了解如何从实模式切换到保护模式，需要了解：为何开启A20，以及如何开启A20；如何初始化GDT表；如何使能和进入保护模式
