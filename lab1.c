@@ -43,3 +43,18 @@ main(int argc, char *argv[]) {
     printf("build 512 bytes boot sector: '%s' success!\n", argv[2]);
     return 0;
 }
+
+#EX2
+#make部分，主要是进入QEMU调试
+lab1-mon: $(UCOREIMG)
+	$(V)$(TERMINAL) -e "$(QEMU) -S -s -d in_asm -D $(BINDIR)/q.log -monitor stdio -hda $< -serial null"
+	$(V)sleep 2
+	$(V)$(TERMINAL) -e "gdb -q -x tools/lab1init"
+#同时在lab1init里面进行了初始化的设置
+#包括内核，QEMU的端口，架构模式，以及断点，语法依然看不太懂
+file bin/kernel
+target remote :1234
+set architecture i8086
+b *0x7c00
+continue
+x /2i $pc
