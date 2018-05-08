@@ -96,6 +96,7 @@ start:
     #  address line 20 is tied low, so that addresses higher than
     #  1MB wrap around to zero by default. This code undoes this.
     #inb从0x64端口（IO设备）读取一个字节，等待IO设备不再繁忙
+    #至于为什么是这两个端口，可以参考课程的A20附录部分
     #向0x64端口写入0xd1
     #向0x60端口写入0xdf
 seta20.1:
