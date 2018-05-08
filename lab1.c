@@ -1,4 +1,8 @@
 #EX1,CODE
+#操作系统镜像文件ucore.img是如何一步一步生成的？(需要比较详细地解释Makefile中每一条相关命令和命令参数的含义，以及说明命令导致的结果)
+#答：通过make V=指令可以看到ucore.img生成的过程
+#一个被系统认为是符合规范的硬盘主引导扇区的特征是什么？
+#答：根据阅读sign.c源码得知，一个符合规范的硬盘主引导扇区有两个特征，总的大小在512字节之内，最后的两个字节是标志位0x55,0xAA
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -46,6 +50,11 @@ main(int argc, char *argv[]) {
 /*
 #EX2
 #make部分，主要是进入QEMU调试
+1、从CPU加电后执行的第一条指令开始，单步跟踪BIOS的执行。
+2、在初始化位置0x7c00设置实地址断点,测试断点正常。
+这段代码在lab1init中，b *0x7c00部分
+3、从0x7c00开始跟踪代码运行,将单步跟踪反汇编得到的代码与bootasm.S和 bootblock.asm进行比较。
+4、自己找一个bootloader或内核中的代码位置，设置断点并进行测试。
 lab1-mon: $(UCOREIMG)
 	$(V)$(TERMINAL) -e "$(QEMU) -S -s -d in_asm -D $(BINDIR)/q.log -monitor stdio -hda $< -serial null"
 	$(V)sleep 2
@@ -63,7 +72,10 @@ x /2i $pc
 /*
 #EX3
 BIOS将通过读取硬盘主引导扇区到内存，并转跳到对应内存中的位置执行bootloader。请分析bootloader是如何完成从实模式进入保护模式的。
-需要掌握：为何开启A20，以及如何开启A20；如何初始化GDT表；如何使能和进入保护模式
+需要掌握：为何开启A20，以及如何开启A20；
+答：向下兼容的特性，0x64；0x60两个IO端口特定值
+如何初始化GDT表；
+如何使能和进入保护模式
 代码如下：
 #include <asm.h>
 
@@ -159,4 +171,12 @@ gdt:
 gdtdesc:
     .word 0x17                                      # sizeof(gdt) - 1
     .long gdt                                       # address gdt
+*/
+
+/*
+#EX4
+通过阅读bootmain.c，了解bootloader如何加载ELF文件。通过分析源代码和通过qemu来运行并调试bootloader&OS，
+bootloader如何读取硬盘扇区的？
+bootloader是如何加载ELF格式的OS？
+提示：可阅读“硬盘访问概述”，“ELF执行文件格式概述”这两小节。
 */
