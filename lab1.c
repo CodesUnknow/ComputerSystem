@@ -82,7 +82,7 @@ x /2i $pc
 BIOS将通过读取硬盘主引导扇区到内存，并转跳到对应内存中的位置执行bootloader。请分析bootloader是如何完成从实模式进入保护模式的。
 需要掌握的一部分关于GDT,LDT的先验知识：http://www.techbulo.com/708.html
 需要掌握：为何开启A20，以及如何开启A20；
-答：为了保持向下兼容的特性，0x64；0x60两个IO端口特定值
+答：打开A20后，操作系统会从实模式切换到保护模式，打开前只能读取1MB的内存，超过会回卷。打开方式为：设置0x64；0x60两个IO端口特定值
 如何初始化GDT表；
 答：利用lgdt命令将GDT的大小和起始地址加载到GDT寄存器
 补充知识：
@@ -196,9 +196,32 @@ gdtdesc:
 /*
 #EX4
 通过阅读bootmain.c，了解bootloader如何加载ELF文件。通过分析源代码和通过qemu来运行并调试bootloader&OS，
+这里就涉及到下面两个关键的问题，如何读取硬盘的扇区，如何识别出ELF格式的文件（ucore操作系统的格式是ELF格式的）
+在main函数中，通过readseg（通过读取elf文件的header进行判断）\readsect（读扇区，需要大概了解从哪读，读多大）来具体实现
 bootloader如何读取硬盘扇区的？
-
+答：从代码初步分析是从0x10000这个地址，每次读一个扇区的大小，然后判断扇区的格式，是否是ELF，这个是通过对文件头特定字节的判断
 bootloader是如何加载ELF格式的OS？
-
+答：直接跳转到ELF格式文件的入口处
 提示：可阅读“硬盘访问概述”，“ELF执行文件格式概述”这两小节。
 */
+练习5：实现函数调用堆栈跟踪函数 （需要编程）
+我们需要在lab1中完成kdebug.c中函数print_stackframe的实现，可以通过函数print_stackframe来跟踪函数调用堆栈中记录的返回地址。
+在如果能够正确实现此函数，可在lab1中执行 “make qemu”后，在qemu模拟器中得到类似如下的输出：
+……
+ebp:0x00007b28 eip:0x00100992 args:0x00010094 0x00010094 0x00007b58 0x00100096
+    kern/debug/kdebug.c:305: print_stackframe+22
+ebp:0x00007b38 eip:0x00100c79 args:0x00000000 0x00000000 0x00000000 0x00007ba8
+    kern/debug/kmonitor.c:125: mon_backtrace+10
+ebp:0x00007b58 eip:0x00100096 args:0x00000000 0x00007b80 0xffff0000 0x00007b84
+    kern/init/init.c:48: grade_backtrace2+33
+ebp:0x00007b78 eip:0x001000bf args:0x00000000 0xffff0000 0x00007ba4 0x00000029
+    kern/init/init.c:53: grade_backtrace1+38
+ebp:0x00007b98 eip:0x001000dd args:0x00000000 0x00100000 0xffff0000 0x0000001d
+    kern/init/init.c:58: grade_backtrace0+23
+ebp:0x00007bb8 eip:0x00100102 args:0x0010353c 0x00103520 0x00001308 0x00000000
+    kern/init/init.c:63: grade_backtrace+34
+ebp:0x00007be8 eip:0x00100059 args:0x00000000 0x00000000 0x00000000 0x00007c53
+    kern/init/init.c:28: kern_init+88
+ebp:0x00007bf8 eip:0x00007d73 args:0xc031fcfa 0xc08ed88e 0x64e4d08e 0xfa7502a8
+<unknow>: -- 0x00007d72 –
+……
