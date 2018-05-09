@@ -1,6 +1,9 @@
 #EX1,CODE
 #操作系统镜像文件ucore.img是如何一步一步生成的？(需要比较详细地解释Makefile中每一条相关命令和命令参数的含义，以及说明命令导致的结果)
 #答：通过make V=指令可以看到ucore.img生成的过程，具体就是gcc对c语言进行编译，ld命令将编译文件进行链接，最后生成img文件。
+#对于C、C++、pas等，首先要把源文件编译成中间代码文件，Windows下.obj，UNIX下.o，即 Object File，这个动作叫做编译（compile）。
+#然后再把大量的Object File合成执行文件，这个动作叫作链接（link）。
+#有关makefile的一些补充知识：https://blog.csdn.net/liang13664759/article/details/1771246/
 #一个被系统认为是符合规范的硬盘主引导扇区的特征是什么？
 #答：根据阅读sign.c源码得知，一个符合规范的硬盘主引导扇区有两个特征，总的大小在512字节之内，最后的两个字节是标志位0x55,0xAA。
 #include <stdio.h>
@@ -51,10 +54,15 @@ main(int argc, char *argv[]) {
 #EX2
 #make部分，主要是进入QEMU调试
 1、从CPU加电后执行的第一条指令开始，单步跟踪BIOS的执行。
+时钟无法正常加载？第一条指令不是长跳转应有的地址？
 2、在初始化位置0x7c00设置实地址断点,测试断点正常。
 这段代码在lab1init中，b *0x7c00部分
+
 3、从0x7c00开始跟踪代码运行,将单步跟踪反汇编得到的代码与bootasm.S和 bootblock.asm进行比较。
+相同
 4、自己找一个bootloader或内核中的代码位置，设置断点并进行测试。
+如何在源代码中得到这条指令编译后的地址？
+
 lab1-mon: $(UCOREIMG)
 	$(V)$(TERMINAL) -e "$(QEMU) -S -s -d in_asm -D $(BINDIR)/q.log -monitor stdio -hda $< -serial null"
 	$(V)sleep 2
@@ -72,10 +80,21 @@ x /2i $pc
 /*
 #EX3
 BIOS将通过读取硬盘主引导扇区到内存，并转跳到对应内存中的位置执行bootloader。请分析bootloader是如何完成从实模式进入保护模式的。
+需要掌握的一部分关于GDT,LDT的先验知识：http://www.techbulo.com/708.html
 需要掌握：为何开启A20，以及如何开启A20；
-答：向下兼容的特性，0x64；0x60两个IO端口特定值
+答：为了保持向下兼容的特性，0x64；0x60两个IO端口特定值
 如何初始化GDT表；
+答：利用lgdt命令将GDT的大小和起始地址加载到GDT寄存器
+补充知识：
+全局描述符表GDT（Global Descriptor Table）在整个系统中，全局描述符表GDT只有一张(一个处理器对应一个GDT)，GDT可以被放在内存的任何位置，
+但CPU必须知道GDT的入口，也就是基地址放在哪里，Intel的设计者门提供了一个寄存器GDTR用来存放GDT的入口地址，程序员将GDT设定在内存中某个位置之后，
+可以通过LGDT指令将GDT的入口地址装入此寄存器，从此以后，CPU就根据此寄存器中的内容作为GDT的入口来访问GDT了。
+GDTR中存放的是GDT在内存中的基地址和其表长界限。
+基地址指定GDT表中字节0在线性地址空间中的地址，表长度指明GDT表的字节长度值。指令LGDT和SGDT分别用于加载和保存GDTR寄存器的内容。
+在机器刚加电或处理器复位后，基地址被默认地设置为0，而长度值被设置成0xFFFF。在保护模式初始化过程中必须给GDTR加载一个新值。
+
 如何使能和进入保护模式
+答：读代码部分，不是很懂
 代码如下：
 #include <asm.h>
 
@@ -131,7 +150,8 @@ seta20.2:
     # and segment translation that makes virtual addresses
     # identical to physical addresses, so that the
     # effective memory map does not change during the switch.
-    #以下是加载全局描述符部分，lgdt对应的应该是某个固定寄存器
+    #以下是加载全局描述符部分，lgdt对应的对全局表寄存器的操作，用这个命令来加载GDT的大小和起始地址到GDT寄存器中
+    #其中的数值在gdtdesc中，其中word为大小，long为地址
     lgdt gdtdesc
     movl %cr0, %eax
     orl $CR0_PE_ON, %eax
@@ -177,6 +197,8 @@ gdtdesc:
 #EX4
 通过阅读bootmain.c，了解bootloader如何加载ELF文件。通过分析源代码和通过qemu来运行并调试bootloader&OS，
 bootloader如何读取硬盘扇区的？
+
 bootloader是如何加载ELF格式的OS？
+
 提示：可阅读“硬盘访问概述”，“ELF执行文件格式概述”这两小节。
 */
